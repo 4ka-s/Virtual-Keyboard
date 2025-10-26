@@ -8,4 +8,4 @@ A wvkbd wrapper made in quickshell QML for hyprland based systems. Primarily mad
 
 [HOW TO USE]
 
-Just click on the "VirtualKeyboard.sh" and it'll show up as a widget on that monitor. Add this same file hyprland exec's if you wish for it to auto-start.
+Just run the "VirtualKeyboard.sh" and it'll show up as a widget on that monitor. Add this same file hyprland exec's if you wish for it to auto-start.
