@@ -3,7 +3,7 @@ A wvkbd wrapper made in quickshell QML for hyprland based systems. Primarily mad
 
 [PREREQUISITES]
 
--wvkbd
+-wvkbd-git
 -qtbased tools
 
 [HOW TO USE]
