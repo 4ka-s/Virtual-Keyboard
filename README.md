@@ -1,9 +1,8 @@
 # Virtual-Keyboard
-A wvkbd wrapper made in quickshell QML for hyprland based systems. Primarily made for AxOS, one should have no problems there. If not, need to edit QML file to adjust position accordingly.
-
+A Quickshell widget written with QML to add an onscreen keyboard widget with a drown down icon for Wayland systems.
 [PREREQUISITES]
 
--wvkbd-git
+-Ydotool
 -qtbased tools
 
 [HOW TO USE]
