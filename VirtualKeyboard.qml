@@ -54,8 +54,8 @@ ShellRoot {
                 id: icon
                 anchors.centerIn: parent
                 source: configDir + "/icon.png"
-                width: 30
-                height: 35
+                width: 34
+                height: 34
             }
 
             // Click handler
