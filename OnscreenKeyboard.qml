@@ -6,24 +6,26 @@ ShellRoot {
     PanelWindow {
         id: keyboardWindow
         
-        // Position at bottom
         anchors {
             bottom: true
+            left: isPinned? false : true
+        }
+
+        property int dragOffsetX: (Screen.width/2)-keyboardContainer.width/2
+        property int dragOffsetY: 10
+
+        margins {
+            bottom: dragOffsetY
+            left: dragOffsetX
         }
         
-        width: keyboardContainer.width
-        height: keyboardContainer.height+10
-
-        // Keyboard height - MODIFIED: Increased from 450 to 460
-        implicitHeight: keyboardContainer.height+10 // **<-- MODIFIED**
+        implicitWidth: keyboardContainer.width
+        implicitHeight: keyboardContainer.height+10
         
-        // Don't push other windows (overlay mode) - toggleable
         exclusionMode: isPinned ? ExclusionMode.Auto : ExclusionMode.Ignore
 
         property bool isPinned: false
         
-        // Transparency: 0.0 = fully transparent, 1.0 = fully opaque
-        // 5% transparency = 0.95 opacity
         property real keyboardOpacity: 0.95
         
         color: "transparent"
@@ -34,12 +36,10 @@ ShellRoot {
             anchors {
                 horizontalCenter: parent.horizontalCenter
                 bottom: parent.bottom
-                bottomMargin: 10
             }
             
-            // MODIFIED: Increased from 400 to 410
             width: 1232
-            height: 400 // **<-- MODIFIED**
+            height: 400
             color: "#131313"
             opacity: keyboardWindow.keyboardOpacity
             radius: 25
@@ -48,9 +48,8 @@ ShellRoot {
                 id: mainRow
                 anchors {
                     horizontalCenter: parent.horizontalCenter
-                    // MODIFIED: Change verticalCenter to top-anchor with margin
-                    top: parent.top // **<-- MODIFIED**
-                    topMargin: 15 // **<-- ADDED: Provides the 10px shift/padding from the top**
+                    top: parent.top
+                    topMargin: 15
                 }
                 spacing: 0
                 
@@ -59,26 +58,75 @@ ShellRoot {
                     width: 60
                     height: keyboardContainer.height
                     
-                    Rectangle {
-                        id: pinButton
+                    Column {
                         anchors.centerIn: parent
-                        width: 40
-                        height: 40
-                        radius: 20
-                        color: keyboardWindow.isPinned ? "#D5C1A8" : "#181818"
+                        spacing: 10
                         
-                        Text {
-                            anchors.centerIn: parent
-                            text: "📌"
-                            font.pixelSize: 20
+                        // Pin button
+                        Rectangle {
+                            id: pinButton
+                            width: 40
+                            height: 40
+                            radius: 20
+                            color: keyboardWindow.isPinned ? "#D5C1A8" : "#181818"
+                            
+                            Text {
+                                anchors.centerIn: parent
+                                text: "📌"
+                                font.pixelSize: 20
+                            }
+                            
+                            MouseArea {
+                                anchors.fill: parent
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: {
+                                    keyboardWindow.isPinned = !keyboardWindow.isPinned
+                                    console.log("Pin toggled:", keyboardWindow.isPinned ? "Pinned (pushes windows)" : "Unpinned (overlay)")
+
+                                    keyboardWindow.dragOffsetX= (Screen.width/2)-(keyboardContainer.width/2)
+                                    keyboardWindow.dragOffsetY= 10                                
+                                }
+                            }
                         }
                         
-                        MouseArea {
-                            anchors.fill: parent
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: {
-                                keyboardWindow.isPinned = !keyboardWindow.isPinned
-                                console.log("Pin toggled:", keyboardWindow.isPinned ? "Pinned (pushes windows)" : "Unpinned (overlay)")
+                        // Drag handle button
+                        Rectangle {
+                            id: dragHandle
+                            width: 40
+                            height: 40
+                            radius: 20
+                            color: dragArea.pressed ? "#8C7853" : "#181818"
+                            opacity: keyboardWindow.isPinned ? 0.3 : 1.0
+                            
+                            Text {
+                                anchors.centerIn: parent
+                                text: "⋮⋮"
+                                font.pixelSize: 20
+                                color: "#8F8F8F"
+                                rotation: 90
+                            }
+                            
+                            MouseArea {
+                                id: dragArea
+                                anchors.fill: parent
+                                cursorShape: keyboardWindow.isPinned ? Qt.ForbiddenCursor : Qt.DragMoveCursor
+                                enabled: !keyboardWindow.isPinned
+                                
+                                property point lastPos: Qt.point(0, 0)
+                                
+                                onPressed: {
+                                    lastPos = Qt.point(mouse.x, mouse.y)
+                                }
+                                
+                                onPositionChanged: {
+                                    console.log("Mouse position: x=" + mouse.x + ", y=" + mouse.y)
+
+                                    var dx = mouse.x - lastPos.x
+                                    var dy = mouse.y - lastPos.y
+                                    keyboardWindow.dragOffsetX += dx
+                                    keyboardWindow.dragOffsetY -= dy
+                                    lastPos = Qt.point(mouse.x, mouse.y)
+                                }
                             }
                         }
                     }
@@ -87,9 +135,9 @@ ShellRoot {
                 // Separator
                 Rectangle {
                     width: 2
-                    height: keyboardContainer.height*.8
+                    height: keyboardContainer.height * 0.8
                     color: "#8F8F8F"
-                    opacity: .5
+                    opacity: 0.5
                     anchors.verticalCenter: parent.verticalCenter
                     anchors.verticalCenterOffset: -10
                 }
@@ -100,7 +148,7 @@ ShellRoot {
                     height: keyboardContainer.height
                     spacing: 5
                     
-                    Item { height: 10 } // This existing top margin will now create a total of 20px padding (10px from mainRow topMargin + 10px here)
+                    Item { height: 10 }
                     
                     // Row 1: Numbers (or Function keys when Fn is active)
                     Row {
@@ -121,7 +169,6 @@ ShellRoot {
                                 keyCode: modifierState.fnPressed ? getFnKeyCode(modelData) : modelData
                                 keyWidth: 75
                                 
-                                // Show function key labels when Fn is active
                                 displayOverride: modifierState.fnPressed ? getFnKeyCode(modelData) : ""
                                 
                                 function getFnKeyCode(num) {
@@ -313,12 +360,10 @@ ShellRoot {
         
         // Get display text based on modifiers
         property string displayText: {
-            // Use override if present (for Fn keys)
             if (displayOverride !== "") return displayOverride
             
             if (!modifierState.shiftPressed) return keyText
             
-            // Shift mappings
             var shiftMap = {
                 "`": "~",
                 "1": "!", "2": "@", "3": "#", "4": "$", "5": "%",
@@ -330,7 +375,7 @@ ShellRoot {
                 "y": "Y", "u": "U", "i": "I", "o": "O", "p": "P",
                 "a": "A", "s": "S", "d": "D", "f": "F", "g": "G",
                 "h": "H", "j": "J", "k": "K", "l": "L",
-                "z": "Z", "x": "C", "c": "C", "v": "V", "b": "B",
+                "z": "Z", "x": "X", "c": "C", "v": "V", "b": "B",
                 "n": "N", "m": "M"
             }
             
@@ -367,7 +412,6 @@ ShellRoot {
             
             onClicked: {
                 if (isModifier) {
-                    // Toggle modifier state
                     if (keyCode === "Shift_L" || keyCode === "Shift_R") {
                         modifierState.shiftPressed = !modifierState.shiftPressed
                         keyboardInput.toggleModifier(keyCode, modifierState.shiftPressed)
@@ -379,10 +423,8 @@ ShellRoot {
                         keyboardInput.toggleModifier(keyCode, modifierState.altPressed)
                     } else if (keyCode === "Fn") {
                         modifierState.fnPressed = !modifierState.fnPressed
-                        // Fn is local only, doesn't send key events
                     }
                 } else {
-                    // Regular key - send with active modifiers
                     keyboardInput.sendKey(keyCode)
                 }
             }
@@ -400,12 +442,10 @@ ShellRoot {
             console.log("Modifier", keyText, pressed ? "pressed" : "released")
             
             if (pressed) {
-                // Hold modifier down
                 var proc = keyProcess.createObject(keyboardInput)
                 proc.command = ["ydotool", "key", keyCode + ":1"]
                 proc.running = true
             } else {
-                // Release modifier
                 var proc = keyProcess.createObject(keyboardInput)
                 proc.command = ["ydotool", "key", keyCode + ":0"]
                 proc.running = true
@@ -422,42 +462,33 @@ ShellRoot {
             var activeModifiers = modifierState.getActiveModifiers()
             console.log("Sending key:", keyText, "with modifiers:", activeModifiers)
             
-            // Press key (keycode:1)
             var pressProc = keyProcess.createObject(keyboardInput)
             pressProc.command = ["ydotool", "key", keyCode + ":1"]
             pressProc.running = true
             
-            // Release key (keycode:0) - small delay
             var releaseProc = keyProcess.createObject(keyboardInput)
             releaseProc.command = ["sh", "-c", "sleep 0.05 && ydotool key " + keyCode + ":0"]
             releaseProc.running = true
         }
         
         function getKeyCode(keyText) {
-            // Map keys to Linux kernel keycodes
             var keyCodeMap = {
-                // Function keys
                 "F1": 59, "F2": 60, "F3": 61, "F4": 62, "F5": 63,
                 "F6": 64, "F7": 65, "F8": 66, "F9": 67, "F10": 68,
                 "F11": 87, "F12": 88,
                 "Print": 99, "Delete": 111,
-                // Numbers row
                 "`": 41,
                 "1": 2, "2": 3, "3": 4, "4": 5, "5": 6,
                 "6": 7, "7": 8, "8": 9, "9": 10, "0": 11,
                 "-": 12, "=": 13,
-                // QWERTY row
                 "q": 16, "w": 17, "e": 18, "r": 19, "t": 20,
                 "y": 21, "u": 22, "i": 23, "o": 24, "p": 25,
                 "[": 26, "]": 27, "\\": 43,
-                // ASDF row
                 "a": 30, "s": 31, "d": 32, "f": 33, "g": 34,
                 "h": 35, "j": 36, "k": 37, "l": 38,
                 ";": 39, "'": 40,
-                // ZXCV row
                 "z": 44, "x": 45, "c": 46, "v": 47, "b": 48,
                 "n": 49, "m": 50, ",": 51, ".": 52, "/": 53,
-                // Special keys
                 "BackSpace": 14,
                 "Return": 28,
                 "Control_L": 29,
