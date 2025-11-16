@@ -115,17 +115,15 @@ ShellRoot {
                                 property point lastPos: Qt.point(0, 0)
                                 
                                 onPressed: {
-                                    lastPos = Qt.point(mouse.x, mouse.y)
+                                    lastPos = Qt.point(mouseX, mouseY)
                                 }
                                 
                                 onPositionChanged: {
-                                    console.log("Mouse position: x=" + mouse.x + ", y=" + mouse.y)
-
-                                    var dx = mouse.x - lastPos.x
-                                    var dy = mouse.y - lastPos.y
+                                    var dx = (mouseX - lastPos.x)
+                                    var dy = (mouseY - lastPos.y)
                                     keyboardWindow.dragOffsetX += dx
                                     keyboardWindow.dragOffsetY -= dy
-                                    lastPos = Qt.point(mouse.x, mouse.y)
+                                    lastPos = Qt.point(mouseX, mouseY)
                                 }
                             }
                         }
