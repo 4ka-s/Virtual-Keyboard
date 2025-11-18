@@ -3,30 +3,28 @@ import Quickshell.Io
 import QtQuick
 
 ShellRoot {
+    function clamp(value, min, max) {
+        return Math.max(min, Math.min(value, max));
+    }
     PanelWindow {
         id: keyboardWindow
         
         anchors {
             bottom: true
-            left: isPinned? false : true
         }
 
-        property int dragOffsetX: (Screen.width/2)-keyboardContainer.width/2
-        property int dragOffsetY: 10
-
         margins {
-            bottom: dragOffsetY
-            left: dragOffsetX
+            bottom: 10/keyboardContainer.yScaleObject
         }
         
         implicitWidth: keyboardContainer.width
-        implicitHeight: keyboardContainer.height+10
+        implicitHeight: keyboardContainer.height
         
         exclusionMode: isPinned ? ExclusionMode.Auto : ExclusionMode.Ignore
 
         property bool isPinned: false
         
-        property real keyboardOpacity: 0.95
+        property real keyboardOpacity: .98
         
         color: "transparent"
         
@@ -38,35 +36,43 @@ ShellRoot {
                 bottom: parent.bottom
             }
             
-            width: 1232
-            height: 400
+            property real xScale :0.641666667
+            
+            width: keyboardContainer.Screen.width*xScale
+            
+            property real yScale :(keyboardContainer.width*0.324675325)/1080
+
+            height: keyboardContainer.Screen.height*yScale
+            
             color: "#131313"
             opacity: keyboardWindow.keyboardOpacity
             radius: 25
+
+            property real xScaleObject: 1232/keyboardContainer.width
+            property real yScaleObject: 400/keyboardContainer.height
             
             Row {
                 id: mainRow
                 anchors {
                     horizontalCenter: parent.horizontalCenter
                     top: parent.top
-                    topMargin: 15
+                    topMargin: 15/keyboardContainer.yScaleObject
                 }
                 spacing: 0
                 
                 // Pin button column on far left
                 Item {
-                    width: 60
-                    height: keyboardContainer.height
+                    width: 60/keyboardContainer.xScaleObject
+                    height: keyboardContainer.height/keyboardContainer.yScaleObject
                     
                     Column {
                         anchors.centerIn: parent
-                        spacing: 10
                         
                         // Pin button
                         Rectangle {
                             id: pinButton
-                            width: 40
-                            height: 40
+                            width: 40/keyboardContainer.xScaleObject
+                            height: 40/keyboardContainer.yScaleObject
                             radius: 20
                             color: keyboardWindow.isPinned ? "#D5C1A8" : "#181818"
                             
@@ -81,49 +87,7 @@ ShellRoot {
                                 cursorShape: Qt.PointingHandCursor
                                 onClicked: {
                                     keyboardWindow.isPinned = !keyboardWindow.isPinned
-                                    console.log("Pin toggled:", keyboardWindow.isPinned ? "Pinned (pushes windows)" : "Unpinned (overlay)")
-
-                                    keyboardWindow.dragOffsetX= (Screen.width/2)-(keyboardContainer.width/2)
-                                    keyboardWindow.dragOffsetY= 10                                
-                                }
-                            }
-                        }
-                        
-                        // Drag handle button
-                        Rectangle {
-                            id: dragHandle
-                            width: 40
-                            height: 40
-                            radius: 20
-                            color: dragArea.pressed ? "#8C7853" : "#181818"
-                            opacity: keyboardWindow.isPinned ? 0.3 : 1.0
-                            
-                            Text {
-                                anchors.centerIn: parent
-                                text: "⋮⋮"
-                                font.pixelSize: 20
-                                color: "#8F8F8F"
-                                rotation: 90
-                            }
-                            
-                            MouseArea {
-                                id: dragArea
-                                anchors.fill: parent
-                                cursorShape: keyboardWindow.isPinned ? Qt.ForbiddenCursor : Qt.DragMoveCursor
-                                enabled: !keyboardWindow.isPinned
-                                
-                                property point lastPos: Qt.point(0, 0)
-                                
-                                onPressed: {
-                                    lastPos = Qt.point(mouseX, mouseY)
-                                }
-                                
-                                onPositionChanged: {
-                                    var dx = (mouseX - lastPos.x)
-                                    var dy = (mouseY - lastPos.y)
-                                    keyboardWindow.dragOffsetX += dx
-                                    keyboardWindow.dragOffsetY -= dy
-                                    lastPos = Qt.point(mouseX, mouseY)
+                                    console.log("Pin toggled:", keyboardWindow.isPinned ? "Pinned (pushes windows)" : "Unpinned (overlay)")                
                                 }
                             }
                         }
@@ -132,31 +96,31 @@ ShellRoot {
                 
                 // Separator
                 Rectangle {
-                    width: 2
-                    height: keyboardContainer.height * 0.8
+                    width: 2/keyboardContainer.xScaleObject
+                    height: (keyboardContainer.height * 0.8)/keyboardContainer.yScaleObject
                     color: "#8F8F8F"
-                    opacity: 0.5
+                    opacity:  0.5
                     anchors.verticalCenter: parent.verticalCenter
-                    anchors.verticalCenterOffset: -10
+                    anchors.verticalCenterOffset: -10/keyboardContainer.yScaleObject
                 }
                 
                 // Main keyboard
                 Column {
-                    width: 1170
-                    height: keyboardContainer.height
-                    spacing: 5
+                    width: 1170/keyboardContainer.xScaleObject
+                    height: keyboardContainer.height/keyboardContainer.yScaleObject
+                    spacing: 5/keyboardContainer.yScaleObject
                     
-                    Item { height: 10 }
+                    Item { height: 10/keyboardContainer.yScaleObject }
                     
                     // Row 1: Numbers (or Function keys when Fn is active)
                     Row {
                         anchors.horizontalCenter: parent.horizontalCenter
-                        spacing: 5
+                        spacing: 5/keyboardContainer.xScaleObject
                         
                         Key {
                             keyText: "Esc"
                             keyCode: "Escape"
-                            keyWidth: 75
+                            keyWidth: 75/keyboardContainer.xScaleObject
                             isSpecial: true
                         }
                         
@@ -165,7 +129,7 @@ ShellRoot {
                             Key {
                                 keyText: modelData
                                 keyCode: modifierState.fnPressed ? getFnKeyCode(modelData) : modelData
-                                keyWidth: 75
+                                keyWidth: 75/keyboardContainer.xScaleObject
                                 
                                 displayOverride: modifierState.fnPressed ? getFnKeyCode(modelData) : ""
                                 
@@ -183,7 +147,7 @@ ShellRoot {
                         Key {
                             keyText: "⌫"
                             keyCode: "BackSpace"
-                            keyWidth: 100
+                            keyWidth: 100/keyboardContainer.xScaleObject
                             isSpecial: true
                         }
                     }
@@ -191,12 +155,12 @@ ShellRoot {
                     // Row 2: QWERTY
                     Row {
                         anchors.horizontalCenter: parent.horizontalCenter
-                        spacing: 5
+                        spacing: 5/keyboardContainer.xScaleObject
                         
                         Key {
                             keyText: "Tab"
                             keyCode: "Tab"
-                            keyWidth: 100
+                            keyWidth: 100/keyboardContainer.xScaleObject
                             isSpecial: true
                         }
                         
@@ -204,34 +168,34 @@ ShellRoot {
                             model: ["q", "w", "e", "r", "t", "y", "u", "i", "o", "p", "[", "]"]
                             Key {
                                 keyText: modelData
-                                keyWidth: 75
+                                keyWidth: 75/keyboardContainer.xScaleObject
                             }
                         }
                         
                         Key {
                             keyText: "\\"
-                            keyWidth: 75
+                            keyWidth: 75/keyboardContainer.xScaleObject
                         }
                     }
                     
                     // Row 3: ASDFGH
                     Row {
                         anchors.horizontalCenter: parent.horizontalCenter
-                        anchors.horizontalCenterOffset: 62
-                        spacing: 5
+                        anchors.horizontalCenterOffset: 62/keyboardContainer.xScaleObject
+                        spacing: 5/keyboardContainer.xScaleObject
                         
                         Repeater {
                             model: ["a", "s", "d", "f", "g", "h", "j", "k", "l", ";", "'"]
                             Key {
                                 keyText: modelData
-                                keyWidth: 75
+                                keyWidth: 75/keyboardContainer.xScaleObject
                             }
                         }
                         
                         Key {
                             keyText: "Enter"
                             keyCode: "Return"
-                            keyWidth: 130
+                            keyWidth: 130/keyboardContainer.xScaleObject
                             isSpecial: true
                         }
                     }
@@ -239,12 +203,12 @@ ShellRoot {
                     // Row 4: ZXCVBN
                     Row {
                         anchors.horizontalCenter: parent.horizontalCenter
-                        spacing: 5
+                        spacing: 5/keyboardContainer.xScaleObject
                         
                         Key {
                             keyText: "Shift"
                             keyCode: "Shift_L"
-                            keyWidth: 150
+                            keyWidth: 150/keyboardContainer.xScaleObject
                             isSpecial: true
                             isModifier: true
                         }
@@ -253,14 +217,14 @@ ShellRoot {
                             model: ["z", "x", "c", "v", "b", "n", "m", ",", ".", "/"]
                             Key {
                                 keyText: modelData
-                                keyWidth: 75
+                                keyWidth: 75/keyboardContainer.xScaleObject
                             }
                         }
                         
                         Key {
                             keyText: "Shift"
                             keyCode: "Shift_R"
-                            keyWidth: 150
+                            keyWidth: 150/keyboardContainer.xScaleObject
                             isSpecial: true
                             isModifier: true
                         }
@@ -269,12 +233,12 @@ ShellRoot {
                     // Row 5: Bottom row
                     Row {
                         anchors.horizontalCenter: parent.horizontalCenter
-                        spacing: 5
+                        spacing: 5/keyboardContainer.xScaleObject
                         
                         Key {
                             keyText: "Fn"
                             keyCode: "Fn"
-                            keyWidth: 80
+                            keyWidth: 80/keyboardContainer.xScaleObject
                             isSpecial: true
                             isModifier: true
                         }
@@ -282,7 +246,7 @@ ShellRoot {
                         Key {
                             keyText: "Ctrl"
                             keyCode: "Control_L"
-                            keyWidth: 80
+                            keyWidth: 80/keyboardContainer.xScaleObject
                             isSpecial: true
                             isModifier: true
                         }
@@ -290,7 +254,7 @@ ShellRoot {
                         Key {
                             keyText: "Alt"
                             keyCode: "Alt_L"
-                            keyWidth: 100
+                            keyWidth: 100/keyboardContainer.xScaleObject
                             isSpecial: true
                             isModifier: true
                         }
@@ -298,14 +262,14 @@ ShellRoot {
                         Key {
                             keyText: "Space"
                             keyCode: "space"
-                            keyWidth: 480
+                            keyWidth: 480/keyboardContainer.xScaleObject
                             isSpecial: true
                         }
                         
                         Key {
                             keyText: "Alt"
                             keyCode: "Alt_R"
-                            keyWidth: 100
+                            keyWidth: 100/keyboardContainer.xScaleObject
                             isSpecial: true
                             isModifier: true
                         }
@@ -313,7 +277,7 @@ ShellRoot {
                         Key {
                             keyText: "Ctrl"
                             keyCode: "Control_R"
-                            keyWidth: 100
+                            keyWidth: 100/keyboardContainer.xScaleObject
                             isSpecial: true
                             isModifier: true
                         }
@@ -344,7 +308,7 @@ ShellRoot {
     component Key: Rectangle {
         property string keyText: ""
         property string keyCode: keyText
-        property int keyWidth: 80
+        property int keyWidth: 80/keyboardContainer.xScaleObject
         property bool isSpecial: false
         property bool isModifier: false
         property string displayOverride: ""
