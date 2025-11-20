@@ -9,3 +9,8 @@ for mon in $monitors; do
     quickshell -p ./Notification.qml &
     sleep 1
 done
+
+for mon in $monitors; do
+    hyprctl dispatch focusmonitor "$mon"
+    break
+done
