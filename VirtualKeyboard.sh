@@ -4,6 +4,8 @@ sleep 2
 
 monitors=$(hyprctl monitors -j | jq -r '.[].name')
 
+cd "$(dirname "$0")"
+
 for mon in $monitors; do
     hyprctl dispatch focusmonitor "$mon"
     quickshell -p ./Notification.qml &
